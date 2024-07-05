@@ -231,8 +231,8 @@ exports.UpdateEmp = async (data) => {
 };
 
 exports.Login = async (data) => {
-  let query = "select userPassword from Login_Data where username=?";
-  let query1 = "select username,empId,roleID from Login_Data where username=?";
+  let query = "select userPassword from login_data where username=?";
+  let query1 = "select username,empId,roleID from login_data where username=?";
   let returenable = [];
 
   var bytes = CryptoJS.AES.decrypt(data.userPassword, "nks");
@@ -398,7 +398,7 @@ exports.GetRoleIdAdmin = async () => {
 };
 
 exports.PramoteUser = async (data) => {
-  //console.log(data);
+  console.log(data);
   const salt = await bcryt.genSalt(10);
   const hashpass = await bcryt.hash("1234", salt);
   let query1 =
@@ -421,14 +421,14 @@ exports.PramoteUser = async (data) => {
   //   {
 
   //   }
-  {
+  
     // console.log(data.sitelist[0]);
 
     data.sitelist.map((siteId, index) => {
       returnale =
         returnale + promise_connection(query3, [data.empId, siteId, "1"]);
     });
-  }
+  
   return returnale;
 };
 
@@ -568,10 +568,10 @@ exports.SaveBill = async (data) => {
   let query3 = "insert into billsites values (?,?)";
   let query4="insert into billemp values(?,?,?)"
   dayjs.extend(customParseFormat);
-  const billStartDate = dayjs(data.billStartDate, "DD/MM/YYYY").format(
+  const billStartDate = dayjs(data.billStartDate, "YYYY/MM/DD").format(
     "YYYY/MM/DD"
   );
-  const billEndDate = dayjs(data.billEndDate, "DD/MM/YYYY").format(
+  const billEndDate = dayjs(data.billEndDate, "YYYY/MM/DD").format(
     "YYYY/MM/DD"
   );
   returenable = await promise_connection(query1, [
@@ -684,9 +684,34 @@ exports.GetInactiveList=async()=>{
 exports.ActivateEmp=async(Id)=>{
 
   let query="update emp_official set empstatus='Active' where Id=?";
-  return promise_connection(query);
+  return promise_connection(query,[Id]);
 
 }
 
 
 
+exports.GetSiteEmpList=async()=>{
+
+  let query="select ps.Id,ps.siteName,ps.siteArea,COUNT( eo.id) as EmployeeCount from proj_site as ps INNER join emp_official as eo on eo.siteLocaion=ps.Id where eo.empstatus='Active' and ps.Id>0 GROUP BY siteName";
+  return promise_connection(query);
+}
+
+exports.GetEmpAttendanceId=async(data)=>{
+
+  let query="SELECT  EmpId, DATE_FORMAT(AttendanceDate, '%b') AS month, COUNT(*) AS AttendanceCount FROM  attendence WHERE  EmpId = ? and year(AttendanceDate)=? GROUP BY EmpId, month ORDER BY STR_TO_DATE(CONCAT('01-', month, '-?' ), '%d-%b-%Y')";
+  //console.log('first', data.year)
+  return promise_connection(query,[data.Id,data.year]);
+
+}
+
+exports.GetPaySlip=async(Id)=>
+  {
+    let query="select ROW_NUMBER() over (PARTITION by '1') AS serialNo, bd.BillId,be.EmpId as 'registerNo',ep.pfNumber as pfAccountNo,ep.Id,CONCAT(ep.firstName,' ',ep.lastName) as name,ep.fatherSpouseName as fatherName,ep.gender,er.RoleName,a.AttendanceDate as daysWorked,0 as pl,0 as holidays,br.basic as rateofwage,(br.basic+ROUND(((br.basic* brf.HRARate)/100),0))+(br.otherallowance) as basicWages,ROUND(((br.basic* brf.HRARate)/100),0) as hra,0 as otHoursWorked,ROUND(((br.basic* brf.HRARate)/100),0) as hraFix,ROUND(a.AttendanceDate *(br.basic)) as totalWages,ROUND(((br.basic* brf.PFRate)/100),0) as pf,brf.incomeTax as pt,ROUND((( ((br.basic+((br.basic* brf.HRARate)/100))+(br.otherallowance))* brf.ESICRate)/100)) as esic,0 as otwages,ed.lwf,0 as coupon,0 as adv,ROUND(((((br.basic* brf.PFRate)/100))+((( ((br.basic+((br.basic* brf.HRARate)/100))+(br.otherallowance))* brf.ESICRate)/100))+(brf.incomeTax))) as totalDeduction,ROUND((a.AttendanceDate*(br.basic+(br.basic*brf.HRARate/100)+(br.otherallowance)))-((((((br.basic* brf.PFRate)/100))+ROUND ((( ((br.basic+((br.basic* brf.HRARate)/100))+(br.otherallowance))* brf.ESICRate)/100))+(brf.incomeTax))))) as netAmount,DATE_FORMAT(bd.fromdate, '%b/%Y') as 'startDate',DATE_FORMAT(bd.todate, '%b/%Y') as 'endDate'  FROM ((((((((billdata as bd INNER join billemp as be on be.BillId=bd.BillId)INNER join emp_profile as ep on ep.Id=be.EmpId)INNER join emp_data as ed on ed.Id=be.EmpId)INNER join emp_official as eo on eo.Id=be.EmpId)INNER join employee_role as er on er.catagoryid=eo.categoryWork and er.Id=eo.designation)LEFT join (SELECT EmpId,COUNT(*) as AttendanceDate FROM `attendence` GROUP BY EmpId) as a on a.EmpId=be.EmpId)INNER JOIN billrate as br on br.BillId=bd.BillId)JOIN billratefixed as brf) WHERE ep.Id=? GROUP by ep.Id;";
+    return promise_connection(query,[Id]);
+  }
+
+  exports.GetPramoteSites=async()=>{
+
+    let query="";
+    return promise_connection(query);
+  }

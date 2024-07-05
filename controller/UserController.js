@@ -51,6 +51,10 @@ const {
   DeleteBill,
   GetInactiveList,
   ActivateEmp,
+  GetSiteEmpList,
+  GetEmpAttendanceId,
+  GetPaySlip,
+  GetPramoteSites,
  
 } = require("../models/UserModels");
 
@@ -652,4 +656,53 @@ exports.ActivateEmp=async(req,res)=>{
     console.log(error);
     res.json({msg:error})
   }
+}
+
+exports.GetSiteEmpList=async(req,res)=>{
+  let data=[];
+  try {
+    data=await GetSiteEmpList();
+    res.json({msg:"Employee Count",data:data});
+  } catch (error) {
+    console.log(error);
+    res.json({msg:error})
+  }
+}
+
+
+exports.GetEmpAttendance=async(req,res)=>{
+  let data=[];
+  try {
+    
+    data=await GetEmpAttendanceId(req.body);
+    res.json({msg:"AttendanceMonth",data:data});
+  } catch (error) {
+    console.log(error);
+    res.json({msg:error})
+
+  }
+}
+
+exports.GetPaySlipId=async(req,res)=>{
+  let data=[];
+  try {
+    data=await GetPaySlip(req.params.Id);
+    res.json({msg:"Payslip",data:data});
+  } catch (error) {
+    console.log(error);
+    res.json({msg:error})
+  }
+}
+
+exports.GetPramoteSites=async(req,res)=>{
+let data=[];
+try {
+  data =await GetPramoteSites();
+  res.json({msg:"pramotesitelist",data:data});
+  
+} catch (error) {
+  console.log(error);
+  res.json({msg:error})
+}
+
 }
